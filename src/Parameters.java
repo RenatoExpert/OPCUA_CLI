@@ -1,37 +1,44 @@
 //import Interactive;
-//import Config;
 package com.shogunautomation.opcuacli;
+
+import com.shogunautomation.opcuacli.Config;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
 
 public class Parameters {
-	//public static Config getConfig (String[] args) {
-	public static void getConfig (String[] args) {
-		//Config config = new Config();
+	public static Config getConfig (String[] args) {
+		Config config = new Config();
 		Pattern equalPattern = Pattern.compile("--(?<key>\\w+)=\"?(?<value>.*)\"?");
 		Pattern simplePattern = Pattern.compile("--(?<key>\\w+)");
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
-			Matcher equalMatcher = equalPattern.matcher(arg);
-			Matcher simpleMatcher = simplePattern.matcher(arg);
-			if (equalMatcher.matches()) {
-				MatchResult result = equalMatcher.toMatchResult();
-				String key = result.group("key");
-				String value = result.group("value");
+			String key;
+			String value;
+			try {
+				Matcher equalMatcher = equalPattern.matcher(arg);
+				Matcher simpleMatcher = simplePattern.matcher(arg);
+				if (equalMatcher.matches()) {
+					MatchResult result = equalMatcher.toMatchResult();
+					key = result.group("key");
+					value = result.group("value");
+				} else if (simpleMatcher.matches()) {
+					MatchResult result = simpleMatcher.toMatchResult();
+					key = result.group("key");
+					i++;
+					value = args[i];
+				} else {
+					String message = String.format("Unknown argument => %s \n", arg);
+					throw new Exception(message);
+				}
 				register(key, value);
-			} else if (simpleMatcher.matches()) {
-				MatchResult result = simpleMatcher.toMatchResult();
-				String key = result.group("key");
-				i++;
-				String value = args[i];
-				register(key, value);
-			} else {
-				System.out.printf("Unknown parameter => %s \n", arg);
+				config.setParameter(key, value);
+			} catch (Exception error) {
+				System.out.println(error.getMessage());
 			}
 		}
-		//return config;
+		return config;
 	}
 
 	private static void register (String key, String value) {
